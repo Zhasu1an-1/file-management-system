@@ -8,76 +8,152 @@
     <script src="app.js" defer></script>
 </head>
 <body>
-<main class="workspace">
-    <header class="page-header">
+<svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-files" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 0 0-2 2v13h12a2 2 0 0 0 2-2v-2M8 3h8l4 4v9H8zM16 3v5h4M11 11h6M11 13.5h4"/></symbol>
+    <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="icon-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4 4"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-hash" viewBox="0 0 24 24"><path d="m10 4-3 16m10-16-3 16M4 9h16M3 15h16"/></symbol>
+    <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="icon-disk" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M4 13h16m-12 2.5h.01m3 0h.01"/></symbol>
+    <symbol id="icon-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5 5.5-5.5"/></symbol>
+    <symbol id="icon-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3m-4 4v3"/></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7"/></symbol>
+</svg>
+
+<header class="page-header">
+    <div class="brand">
+        <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#icon-files"/></svg></span>
         <div>
-            <p class="eyebrow">Design Patterns · Assignment 3</p>
             <h1>File Management System</h1>
-            <p class="muted">Organize, store, and share text files.</p>
+            <p>Design Patterns · Assignment 3</p>
         </div>
-        <label class="account">Simulated user
-            <select id="actor" disabled aria-label="Simulated user"></select>
-        </label>
-    </header>
+    </div>
+    <div class="account">
+        <span id="avatar" class="avatar" aria-hidden="true">–</span>
+        <div class="account-field">
+            <label for="actor">Simulated user</label>
+            <select id="actor" aria-describedby="account-role" disabled></select>
+        </div>
+        <span id="account-role" class="role-badge" hidden></span>
+    </div>
+</header>
 
-    <p id="notice" class="notice" role="status" hidden></p>
-
-    <div class="layout">
-        <aside class="panel folders-panel" aria-labelledby="folders-heading">
-            <h2 id="folders-heading">Folders</h2>
-            <nav id="folders" class="folder-list" aria-label="Filter files by folder"></nav>
-            <div id="folder-actions" class="folder-actions" hidden>
+<div class="workspace">
+    <aside class="sidebar" aria-labelledby="folders-heading">
+        <h2 id="folders-heading">Folders</h2>
+        <nav id="folders" class="folder-list" aria-label="Filter files by folder"></nav>
+        <div id="folder-actions" class="folder-actions" hidden>
+            <details id="folder-create-panel">
+                <summary class="folder-create">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-plus"/></svg>
+                    New folder
+                </summary>
                 <form id="create-folder" class="stack">
-                    <label for="folder-name">New folder</label>
+                    <label for="folder-name">Folder name</label>
                     <input id="folder-name" name="name" placeholder="e.g. Coursework" maxlength="120" required>
                     <button type="submit">Create folder</button>
                 </form>
-                <button type="button" id="delete-folder" class="danger" hidden>Delete selected folder</button>
-            </div>
-        </aside>
+            </details>
+            <button type="button" id="delete-folder" class="danger folder-delete" hidden>
+                <svg class="icon" aria-hidden="true"><use href="#icon-trash"/></svg> Delete selected folder
+            </button>
+        </div>
+    </aside>
 
-        <section class="panel files-panel" aria-labelledby="files-heading">
-            <div class="section-heading">
-                <h2 id="files-heading">All files</h2>
-                <button type="button" id="new-file" class="primary" disabled>New file</button>
+    <main class="main-content" aria-labelledby="files-heading">
+        <div class="section-heading">
+            <div>
+                <div class="title-line">
+                    <h2 id="files-heading">All files</h2>
+                    <span id="file-count" class="count-badge" hidden></span>
+                </div>
+                <p id="view-description" class="muted">Browse and organize your files.</p>
             </div>
-            <div class="filters">
-                <form id="search-form" class="stack">
-                    <label for="search">Search by name</label>
-                    <div class="input-action">
-                        <input type="search" id="search" placeholder="Search files" maxlength="120">
-                        <button type="submit">Search</button>
+            <button type="button" id="new-file" class="primary" disabled>
+                <svg class="icon" aria-hidden="true"><use href="#icon-plus"/></svg> New file
+            </button>
+        </div>
+
+        <div id="notice" class="notice" role="status" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg><p></p>
+        </div>
+
+        <section class="file-panel" aria-label="File list">
+            <div class="toolbar">
+                <form id="search-form" class="search-form">
+                    <label class="sr-only" for="search">Search by name</label>
+                    <div class="search-input">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-search"/></svg>
+                        <input type="search" id="search" placeholder="Search by name" maxlength="120">
                     </div>
+                    <button type="submit">Search</button>
                 </form>
-                <form id="open-form" class="stack">
-                    <label for="open-id">Open by file ID</label>
-                    <div class="input-action">
-                        <input id="open-id" placeholder="Paste a file ID" maxlength="36" required>
-                        <button type="submit">Open</button>
-                    </div>
-                </form>
+                <details id="lookup" class="lookup">
+                    <summary class="button">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-hash"/></svg>
+                        Open by file ID
+                        <svg class="icon chevron" aria-hidden="true"><use href="#icon-chevron"/></svg>
+                    </summary>
+                    <form id="open-form" class="lookup-panel stack">
+                        <label for="open-id">File ID</label>
+                        <div class="input-action">
+                            <input id="open-id" placeholder="Paste a file ID" maxlength="36" required>
+                            <button type="submit">Open</button>
+                        </div>
+                    </form>
+                </details>
             </div>
-            <div class="table-scroll">
-                <table>
-                    <thead><tr><th scope="col">Name</th><th scope="col">Type</th><th scope="col">Size</th>
-                        <th scope="col">Storage</th><th scope="col">Created</th></tr></thead>
-                    <tbody id="files"></tbody>
-                </table>
-                <p id="empty" class="empty">Loading files…</p>
+
+            <table id="file-table" role="table">
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th scope="col" role="columnheader">Name</th>
+                        <th scope="col" role="columnheader">Type</th>
+                        <th scope="col" role="columnheader">Size</th>
+                        <th scope="col" role="columnheader">Storage</th>
+                        <th scope="col" role="columnheader">Created</th>
+                    </tr>
+                </thead>
+                <tbody id="files" role="rowgroup"></tbody>
+            </table>
+
+            <div id="empty" class="empty" role="status">
+                <span class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#icon-files"/></svg></span>
+                <h3 id="empty-title">Loading files…</h3>
+                <p id="empty-description" class="muted"></p>
+                <button type="button" id="empty-create" hidden>
+                    <svg class="icon" aria-hidden="true"><use href="#icon-plus"/></svg> Create a file
+                </button>
             </div>
         </section>
-    </div>
-</main>
+    </main>
+</div>
 
 <dialog id="create-dialog" aria-labelledby="create-heading">
-    <div class="section-heading">
-        <h2 id="create-heading">New file</h2>
-        <form method="dialog"><button aria-label="Close new file dialog">Close</button></form>
-    </div>
-    <p id="create-notice" class="notice" role="status" hidden></p>
-    <form id="create-file" class="stack">
-        <label for="file-name">Name</label>
-        <input id="file-name" name="name" placeholder="assignment.txt" maxlength="120" required autofocus>
+    <header class="dialog-header">
+        <div>
+            <h2 id="create-heading">New file</h2>
+            <p class="muted">Choose where to store your text file.</p>
+        </div>
+        <form id="close-create" method="dialog">
+            <button type="submit" class="icon-button" aria-label="Close new file dialog">
+                <svg class="icon" aria-hidden="true"><use href="#icon-close"/></svg>
+            </button>
+        </form>
+    </header>
+    <form id="create-file" class="dialog-body stack">
+        <div id="create-notice" class="notice" role="status" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg><p></p>
+        </div>
+        <div class="stack">
+            <label for="file-name">Name</label>
+            <input id="file-name" name="name" placeholder="assignment.txt" maxlength="120" required autofocus>
+        </div>
         <div class="paired">
             <div class="stack">
                 <label for="file-type">File type</label>
@@ -91,50 +167,101 @@
                 </select>
             </div>
         </div>
-        <label for="file-content">Content</label>
-        <textarea id="file-content" name="content" rows="6" maxlength="100000" required></textarea>
-        <button type="submit" class="primary">Save file</button>
+        <div class="stack">
+            <label for="file-content">Content</label>
+            <textarea id="file-content" name="content" rows="6" maxlength="100000" required
+                      placeholder="Write or paste your text here"></textarea>
+        </div>
+        <div class="dialog-actions">
+            <button type="submit" form="close-create">Cancel</button>
+            <button type="submit" class="primary">Save file</button>
+        </div>
     </form>
 </dialog>
 
-<dialog id="detail-dialog" aria-labelledby="detail-heading">
-    <div class="section-heading">
-        <h2 id="detail-heading">File details</h2>
-        <form method="dialog"><button aria-label="Close file details">Close</button></form>
-    </div>
-    <p id="detail-notice" class="notice" role="status" hidden></p>
-    <dl id="metadata" class="metadata"></dl>
-    <label for="detail-id">File ID</label>
-    <input id="detail-id" class="file-id" readonly>
-    <h3>Content</h3>
-    <pre id="content"></pre>
-    <section aria-labelledby="actions-heading">
-        <h3 id="actions-heading">Owner actions</h3>
-        <div class="detail-actions">
-            <form id="rename-form" class="stack">
-                <label for="rename-name">New name</label>
-                <div class="input-action">
-                    <input id="rename-name" maxlength="120" required>
-                    <button type="submit">Rename</button>
-                </div>
-            </form>
-            <form id="share-form" class="stack">
-                <label for="share-viewer">Share with</label>
-                <div class="input-action">
-                    <select id="share-viewer" required></select>
-                    <button type="submit">Share</button>
-                </div>
-            </form>
-            <form id="move-form" class="stack">
-                <label for="move-folder">Move to</label>
-                <div class="input-action">
-                    <select id="move-folder"></select>
-                    <button type="submit">Move</button>
-                </div>
-            </form>
+<dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-heading">
+    <header class="dialog-header">
+        <div class="detail-title">
+            <span class="file-icon"><svg class="icon" aria-hidden="true"><use href="#icon-file"/></svg></span>
+            <div>
+                <p class="eyebrow">File details</p>
+                <h2 id="detail-heading">File details</h2>
+            </div>
         </div>
-        <button id="delete-file" type="button" class="danger">Delete file</button>
-    </section>
+        <form method="dialog">
+            <button type="submit" class="icon-button" aria-label="Close file details">
+                <svg class="icon" aria-hidden="true"><use href="#icon-close"/></svg>
+            </button>
+        </form>
+    </header>
+    <div class="dialog-body detail-body">
+        <dl id="metadata" class="metadata"></dl>
+        <div class="stack">
+            <label for="detail-id">File ID</label>
+            <input id="detail-id" class="file-id" readonly>
+        </div>
+        <section aria-labelledby="content-heading">
+            <h3 id="content-heading">Content</h3>
+            <pre id="content" tabindex="0" aria-labelledby="content-heading"></pre>
+        </section>
+        <div id="viewer-note" class="viewer-note" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#icon-lock"/></svg>
+            <p><strong>Read-only access.</strong> Only the file owner can make changes or share it.</p>
+        </div>
+        <details id="owner-tools" class="owner-tools">
+            <summary>
+                <span>Owner actions <span id="restricted" class="restricted" hidden>Restricted</span></span>
+                <svg class="icon chevron" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <div class="owner-tools-body">
+                <div id="detail-notice" class="notice" role="status" hidden>
+                    <svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg><p></p>
+                </div>
+                <div class="detail-actions">
+                    <form id="rename-form" class="stack">
+                        <label for="rename-name">New name</label>
+                        <div class="input-action">
+                            <input id="rename-name" maxlength="120" required>
+                            <button type="submit">Rename</button>
+                        </div>
+                    </form>
+                    <form id="share-form" class="stack">
+                        <label for="share-viewer">Share with</label>
+                        <div class="input-action">
+                            <select id="share-viewer" required></select>
+                            <button type="submit">Share</button>
+                        </div>
+                    </form>
+                    <form id="move-form" class="stack">
+                        <label for="move-folder">Move to</label>
+                        <div class="input-action">
+                            <select id="move-folder"></select>
+                            <button type="submit">Move</button>
+                        </div>
+                    </form>
+                </div>
+                <button id="delete-file" type="button" class="danger">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-trash"/></svg> Delete file
+                </button>
+            </div>
+        </details>
+    </div>
+</dialog>
+
+<dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-heading" aria-describedby="confirm-text">
+    <header class="dialog-header">
+        <div class="detail-title">
+            <span class="delete-icon"><svg class="icon" aria-hidden="true"><use href="#icon-trash"/></svg></span>
+            <h2 id="confirm-heading">Confirm deletion</h2>
+        </div>
+    </header>
+    <form method="dialog" class="dialog-body">
+        <p id="confirm-text" class="muted"></p>
+        <div class="dialog-actions">
+            <button value="cancel" autofocus>Cancel</button>
+            <button value="delete" class="destructive">Delete</button>
+        </div>
+    </form>
 </dialog>
 </body>
 </html>

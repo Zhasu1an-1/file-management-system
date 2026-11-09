@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 const account = $('actor');
 const createDialog = $('create-dialog');
 const detailDialog = $('detail-dialog');
+const confirmDialog = $('confirm-dialog');
 const storageLabels = { LOCAL: 'Local', DATABASE: 'Database' };
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 let users = [];
@@ -11,6 +12,23 @@ let folders = [];
 let folderId = '';
 let selectedFile;
 let busy = false;
+
+function icon(name) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const use = document.createElementNS(svg.namespaceURI, 'use');
+    svg.setAttribute('class', 'icon');
+    svg.setAttribute('aria-hidden', 'true');
+    use.setAttribute('href', '#icon-' + name);
+    svg.append(use);
+    return svg;
+}
+
+function textSpan(text, className) {
+    const span = document.createElement('span');
+    span.className = className;
+    span.textContent = text;
+    return span;
+}
 
 async function api(path, method = 'GET', data) {
     const headers = { 'X-User': account.value };
@@ -24,9 +42,11 @@ async function api(path, method = 'GET', data) {
 
 function message(target, text, isError = false) {
     const notice = $(target);
-    notice.textContent = text;
+    notice.querySelector('p').textContent = text;
+    notice.querySelector('use').setAttribute('href', isError ? '#icon-alert' : '#icon-check');
     notice.hidden = !text;
     notice.classList.toggle('error', isError);
+    if (isError) notice.scrollIntoView({ block: 'nearest' });
 }
 
 async function run(action, notice = 'notice') {
@@ -39,6 +59,7 @@ async function run(action, notice = 'notice') {
     } catch (error) {
         const dialog = $(notice).closest('dialog');
         message(dialog && !dialog.open ? 'notice' : notice, error.message, true);
+        if ($('file-count').hidden) $('empty-title').textContent = 'Files are unavailable';
     } finally {
         busy = false;
         account.disabled = !users.length;
@@ -49,46 +70,99 @@ function isOwner() {
     return users.some(user => user.username === account.value && user.role === 'OWNER');
 }
 
+function renderAccount() {
+    const actor = users.find(user => user.username === account.value);
+    $('avatar').textContent = actor.displayName.charAt(0);
+    const role = $('account-role');
+    role.textContent = isOwner() ? 'Owner' : 'Viewer';
+    role.classList.toggle('viewer', !isOwner());
+    role.hidden = false;
+}
+
 function renderFolders() {
     const options = [{ id: '', name: 'All files' }, ...folders];
     $('folders').replaceChildren(...options.map(folder => {
         const button = document.createElement('button');
         button.type = 'button';
-        button.textContent = folder.name;
+        button.append(icon(folder.id ? 'folder' : 'files'), textSpan(folder.name, 'folder-name'));
         button.setAttribute('aria-current', String(folderId === folder.id));
         button.onclick = () => run(async () => {
             folderId = folder.id;
             renderFolders();
+            $('folders').querySelector('[aria-current="true"]').focus();
             await loadFiles();
         });
         return button;
     }));
     $('files-heading').textContent = options.find(folder => folder.id === folderId).name;
+    $('view-description').textContent = isOwner()
+        ? (folderId ? 'Browse and manage files in this folder.' : 'Browse, store, and share your files.')
+        : 'Only files shared with you are shown.';
     $('folder-actions').hidden = !isOwner();
     $('delete-folder').hidden = !folderId;
     $('new-file').disabled = !isOwner();
 }
 
+function renderFileRow(file) {
+    const row = document.createElement('tr');
+    row.setAttribute('role', 'row');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'file-link';
+    const tile = textSpan('', 'file-icon');
+    tile.append(icon('file'));
+    button.append(tile, textSpan(file.name, 'file-name'));
+    button.onclick = () => run(() => openFile(file.id));
+    row.insertCell().append(button);
+
+    const storage = textSpan('', 'storage-label');
+    storage.append(icon(file.storageType === 'LOCAL' ? 'disk' : 'database'), storageLabels[file.storageType]);
+    const fields = [
+        ['Type', textSpan(file.fileType, 'type-badge')],
+        ['Size', `${file.sizeBytes} B`],
+        ['Storage', storage],
+        ['Created', dateFormat.format(new Date(file.createdAt))]
+    ];
+    for (const [label, value] of fields) {
+        const mobileLabel = textSpan(label, 'mobile-label');
+        mobileLabel.setAttribute('aria-hidden', 'true');
+        row.insertCell().append(mobileLabel, value);
+    }
+    for (const cell of row.cells) cell.setAttribute('role', 'cell');
+    return row;
+}
+
+function renderEmptyState(count, searching) {
+    $('empty').hidden = count > 0;
+    $('empty-create').hidden = !isOwner() || searching || Boolean(folderId);
+    if (count > 0) return;
+
+    const title = $('empty-title');
+    const description = $('empty-description');
+    if (searching) {
+        title.textContent = 'No matching files';
+        description.textContent = 'Try a different search or clear the search field.';
+    } else if (!isOwner()) {
+        title.textContent = 'No shared files yet';
+        description.textContent = 'Files will appear here when an owner shares them with you.';
+    } else if (folderId) {
+        title.textContent = 'This folder is empty';
+        description.textContent = 'Open a file and use Move to to add it to this folder.';
+    } else {
+        title.textContent = 'No files yet';
+        description.textContent = 'Create a text file and choose where to store it.';
+    }
+}
+
 async function loadFiles() {
-    const params = new URLSearchParams({ search: $('search').value });
+    const search = $('search').value.trim();
+    const params = new URLSearchParams({ search });
     if (folderId) params.set('folderId', folderId);
     const files = await api('/files?' + params);
-    $('empty').textContent = 'No files match this view.';
-    $('empty').hidden = files.length > 0;
-    $('files').replaceChildren(...files.map(file => {
-        const row = document.createElement('tr');
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'file-link';
-        button.textContent = file.name;
-        button.onclick = () => run(() => openFile(file.id));
-        row.insertCell().append(button);
-        for (const value of [file.fileType, `${file.sizeBytes} B`, storageLabels[file.storageType],
-            dateFormat.format(new Date(file.createdAt))]) {
-            row.insertCell().textContent = value;
-        }
-        return row;
-    }));
+    $('files').replaceChildren(...files.map(renderFileRow));
+    $('file-count').textContent = `${files.length} ${files.length === 1 ? 'file' : 'files'}`;
+    $('file-count').hidden = false;
+    renderEmptyState(files.length, search.length > 0);
 }
 
 async function refresh() {
@@ -132,8 +206,22 @@ async function openFile(id) {
     $('open-id').value = id;
     selectedFile = await api('/files/' + encodeURIComponent(id));
     renderDetails();
+    const canEdit = isOwner() && selectedFile.file.owner === account.value;
+    $('owner-tools').open = canEdit;
+    $('viewer-note').hidden = canEdit;
+    $('restricted').hidden = canEdit;
     message('detail-notice', '');
     detailDialog.showModal();
+}
+
+function confirmDeletion(title, text) {
+    $('confirm-heading').textContent = title;
+    $('confirm-text').textContent = text;
+    confirmDialog.returnValue = '';
+    confirmDialog.showModal();
+    return new Promise(resolve => {
+        confirmDialog.addEventListener('close', () => resolve(confirmDialog.returnValue === 'delete'), { once: true });
+    });
 }
 
 function submit(id, action, notice) {
@@ -145,19 +233,33 @@ function submit(id, action, notice) {
 }
 
 account.addEventListener('change', () => run(async () => {
+    renderAccount();
     folderId = '';
     selectedFile = undefined;
     $('content').textContent = '';
     $('metadata').replaceChildren();
     $('folders').replaceChildren();
     $('files').replaceChildren();
+    $('file-count').hidden = true;
+    $('empty').hidden = false;
+    $('empty-title').textContent = 'Loading files…';
+    $('empty-description').textContent = '';
+    $('empty-create').hidden = true;
+    $('lookup').open = false;
+    $('folder-create-panel').open = false;
+    $('folder-actions').hidden = !isOwner();
+    $('new-file').disabled = !isOwner();
     await refresh();
 }));
 
-$('new-file').onclick = () => {
+function showCreateDialog() {
+    if (busy || !isOwner()) return;
     message('create-notice', '');
     createDialog.showModal();
-};
+}
+
+$('new-file').onclick = showCreateDialog;
+$('empty-create').onclick = showCreateDialog;
 
 submit('search-form', loadFiles);
 submit('open-form', () => openFile($('open-id').value.trim()));
@@ -175,12 +277,15 @@ submit('create-file', async (form) => {
 submit('create-folder', async (form) => {
     await api('/folders', 'POST', { name: $('folder-name').value });
     form.reset();
+    $('folder-create-panel').open = false;
+    $('folder-create-panel').querySelector('summary').focus();
     await refresh();
     message('notice', 'Folder created.');
 });
 
 $('delete-folder').onclick = () => run(async () => {
-    if (!folderId || !window.confirm('Delete the selected empty folder?')) return;
+    const folder = folders.find(folder => folder.id === folderId);
+    if (!folder || !await confirmDeletion('Delete folder?', `“${folder.name}” can be deleted once it is empty.`)) return;
     await api('/folders/' + folderId, 'DELETE');
     folderId = '';
     await refresh();
@@ -211,7 +316,7 @@ submit('move-form', async () => {
 }, 'detail-notice');
 
 $('delete-file').onclick = () => run(async () => {
-    if (!window.confirm(`Delete ${selectedFile.file.name}?`)) return;
+    if (!await confirmDeletion('Delete file?', `“${selectedFile.file.name}” will be permanently deleted.`)) return;
     await api('/files/' + selectedFile.file.id, 'DELETE');
     detailDialog.close();
     $('open-id').value = '';
@@ -222,6 +327,7 @@ $('delete-file').onclick = () => run(async () => {
 run(async () => {
     users = await api('/users');
     account.replaceChildren(...users.map(user =>
-        new Option(`${user.displayName} (${user.role === 'OWNER' ? 'Owner' : 'Viewer'})`, user.username)));
+        new Option(user.displayName, user.username)));
+    renderAccount();
     await refresh();
 });

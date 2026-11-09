@@ -97,9 +97,9 @@ The integration suite boots Spring Boot on loopback with a random port and sends
 ## Demonstration
 
 1. Select **Alice**. Click **New file**, create `assignment.txt` with `Hello, Сәлем 👋` as the content and `txt` as the type, and choose **Local Storage**.
-2. Switch to **Bob**. The file disappears from the list. Click **Open** beside the populated **Open by file ID** field. The server returns **403**.
+2. Switch to **Bob**. The file disappears from the list. Expand **Open by file ID** and click **Open** beside the prefilled ID. The server returns **403**.
 3. Switch to **Alice**. Open `assignment.txt`, select **Bob** in **Share with**, and click **Share**. Close file details and switch back to **Bob**.
-4. Open the shared file. Check the original content and its byte size. Try **Rename**, **Delete file** (confirm), and **Share** with Alice. Each request returns **403**.
+4. Open the shared file. Check the original content and its byte size. Expand **Owner actions** and try **Rename**, **Delete file** (confirm), and **Share** with Alice. Each request returns **403**.
 5. Switch to **Alice**. Rename the file to `assignment-renamed.txt`. Create a **Coursework** folder, open the file, and move it there. Select the folder to view its contents and try deleting the folder. The server returns **409**.
 6. Create `database.txt` with **Database Storage**. Open both files to show the different backends. Share `database.txt` with Bob as well.
 7. Stop the application and restart it with the same settings. Select **Bob** and open both files. Confirm their contents and the **Coursework** folder persisted.
