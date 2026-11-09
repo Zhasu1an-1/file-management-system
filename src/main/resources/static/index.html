@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>File Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
+<main class="workspace">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Design Patterns · Assignment 3</p>
+            <h1>File Management System</h1>
+            <p class="muted">Organize, store, and share text files.</p>
+        </div>
+        <label class="account">Simulated user
+            <select id="actor" disabled aria-label="Simulated user"></select>
+        </label>
+    </header>
+
+    <p id="notice" class="notice" role="status" hidden></p>
+
+    <div class="layout">
+        <aside class="panel folders-panel" aria-labelledby="folders-heading">
+            <h2 id="folders-heading">Folders</h2>
+            <nav id="folders" class="folder-list" aria-label="Filter files by folder"></nav>
+            <div id="folder-actions" class="folder-actions" hidden>
+                <form id="create-folder" class="stack">
+                    <label for="folder-name">New folder</label>
+                    <input id="folder-name" name="name" placeholder="e.g. Coursework" maxlength="120" required>
+                    <button type="submit">Create folder</button>
+                </form>
+                <button type="button" id="delete-folder" class="danger" hidden>Delete selected folder</button>
+            </div>
+        </aside>
+
+        <section class="panel files-panel" aria-labelledby="files-heading">
+            <div class="section-heading">
+                <h2 id="files-heading">All files</h2>
+                <button type="button" id="new-file" class="primary" disabled>New file</button>
+            </div>
+            <div class="filters">
+                <form id="search-form" class="stack">
+                    <label for="search">Search by name</label>
+                    <div class="input-action">
+                        <input type="search" id="search" placeholder="Search files" maxlength="120">
+                        <button type="submit">Search</button>
+                    </div>
+                </form>
+                <form id="open-form" class="stack">
+                    <label for="open-id">Open by file ID</label>
+                    <div class="input-action">
+                        <input id="open-id" placeholder="Paste a file ID" maxlength="36" required>
+                        <button type="submit">Open</button>
+                    </div>
+                </form>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead><tr><th scope="col">Name</th><th scope="col">Type</th><th scope="col">Size</th>
+                        <th scope="col">Storage</th><th scope="col">Created</th></tr></thead>
+                    <tbody id="files"></tbody>
+                </table>
+                <p id="empty" class="empty">Loading files…</p>
+            </div>
+        </section>
+    </div>
+</main>
+
+<dialog id="create-dialog" aria-labelledby="create-heading">
+    <div class="section-heading">
+        <h2 id="create-heading">New file</h2>
+        <form method="dialog"><button aria-label="Close new file dialog">Close</button></form>
+    </div>
+    <p id="create-notice" class="notice" role="status" hidden></p>
+    <form id="create-file" class="stack">
+        <label for="file-name">Name</label>
+        <input id="file-name" name="name" placeholder="assignment.txt" maxlength="120" required autofocus>
+        <div class="paired">
+            <div class="stack">
+                <label for="file-type">File type</label>
+                <input id="file-type" name="fileType" value="txt" maxlength="16" pattern="[A-Za-z0-9]{1,16}" required>
+            </div>
+            <div class="stack">
+                <label for="storage-type">Storage</label>
+                <select id="storage-type" name="storageType">
+                    <option value="LOCAL">Local Storage</option>
+                    <option value="DATABASE">Database Storage</option>
+                </select>
+            </div>
+        </div>
+        <label for="file-content">Content</label>
+        <textarea id="file-content" name="content" rows="6" maxlength="100000" required></textarea>
+        <button type="submit" class="primary">Save file</button>
+    </form>
+</dialog>
+
+<dialog id="detail-dialog" aria-labelledby="detail-heading">
+    <div class="section-heading">
+        <h2 id="detail-heading">File details</h2>
+        <form method="dialog"><button aria-label="Close file details">Close</button></form>
+    </div>
+    <p id="detail-notice" class="notice" role="status" hidden></p>
+    <dl id="metadata" class="metadata"></dl>
+    <label for="detail-id">File ID</label>
+    <input id="detail-id" class="file-id" readonly>
+    <h3>Content</h3>
+    <pre id="content"></pre>
+    <section aria-labelledby="actions-heading">
+        <h3 id="actions-heading">Owner actions</h3>
+        <div class="detail-actions">
+            <form id="rename-form" class="stack">
+                <label for="rename-name">New name</label>
+                <div class="input-action">
+                    <input id="rename-name" maxlength="120" required>
+                    <button type="submit">Rename</button>
+                </div>
+            </form>
+            <form id="share-form" class="stack">
+                <label for="share-viewer">Share with</label>
+                <div class="input-action">
+                    <select id="share-viewer" required></select>
+                    <button type="submit">Share</button>
+                </div>
+            </form>
+            <form id="move-form" class="stack">
+                <label for="move-folder">Move to</label>
+                <div class="input-action">
+                    <select id="move-folder"></select>
+                    <button type="submit">Move</button>
+                </div>
+            </form>
+        </div>
+        <button id="delete-file" type="button" class="danger">Delete file</button>
+    </section>
+</dialog>
+</body>
+</html>
