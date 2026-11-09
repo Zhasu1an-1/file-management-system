@@ -78,7 +78,7 @@ Database content changes and metadata changes share a PostgreSQL transaction. A 
 | `src/main/java/com/example/filemanagementsystem/storage` | Storage interface and persistent implementations |
 | `src/main/resources/static` | Single-page website |
 | `src/test/java` | Unit tests and live PostgreSQL HTTP workflow tests |
-| `docs` | [UML source](docs/class-diagram.mmd), [rendered UML](docs/class-diagram.svg), and [test results](docs/TESTING.md) |
+| `docs` | [UML class diagram (Lucidchart PNG)](docs/class-diagram.png) and [test results](docs/TESTING.md) |
 
 ## Run tests
 
